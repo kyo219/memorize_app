@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "memorize-app"
+version = "0.1.0"
+description = ""
+authors = ["saikyo219 <k.higuchi.219@gmail.com>"]
+readme = "README.md"
+packages = [{include = "memorize_app"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pandas = "^2.2.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -1,2 +1,2 @@
 # memorize_app
-Naiveな暗記アプリのPython実装
+ターミナルで遊ぶ、Naiveな暗記アプリのPython実装

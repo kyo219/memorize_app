@@ -1,16 +1,11 @@
-[tool.poetry]
+[project]
 name = "memorize-app"
 version = "0.1.0"
-description = ""
-authors = ["saikyo219 <k.higuchi.219@gmail.com>"]
+description = "Add your description here"
 readme = "README.md"
-packages = [{include = "memorize_app"}]
-
-[tool.poetry.dependencies]
-python = "^3.10"
-pandas = "^2.2.0"
-
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires-python = ">=3.10"
+dependencies = [
+    "openai>=1.66.2",
+    "pandas>=2.2.3",
+    "tqdm>=4.67.1",
+]

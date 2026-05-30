@@ -1,10 +1,14 @@
 import pandas as pd
 import os
+import sys
 from datetime import datetime
 import argparse
 
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from dataset_utils import dataset_path
+
 class StudyNotesGenerator:
-    def __init__(self, table_path='data/eibunpo/dataframe/eibunpo_sentences.csv'):
+    def __init__(self, table_path='data/datasets/default.csv'):
         self.table_path = table_path
         self.table_df = self.load_table()
         
@@ -168,12 +172,15 @@ def main():
                         help='フィルタータイプ: all_incorrect (全ての間違い) または today_incorrect (今日の間違い)')
     parser.add_argument('--output', type=str, default=None,
                         help='出力ファイルパス (指定しない場合は自動生成)')
-    parser.add_argument('--table', type=str, default='data/eibunpo/dataframe/eibunpo_sentences.csv',
-                        help='入力テーブルのパス')
-    
+    parser.add_argument('--dataset', type=str, default='default',
+                        help='対象のデータセット名 (デフォルト: default)')
+    parser.add_argument('--table', type=str, default=None,
+                        help='入力テーブルのパスを直接指定 (--dataset より優先)')
+
     args = parser.parse_args()
-    
-    generator = StudyNotesGenerator(table_path=args.table)
+
+    table_path = args.table if args.table else dataset_path(args.dataset)
+    generator = StudyNotesGenerator(table_path=table_path)
     generator.generate_markdown(args.filter, args.output)
 
 if __name__ == "__main__":

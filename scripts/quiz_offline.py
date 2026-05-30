@@ -1,17 +1,22 @@
 import pandas as pd
 import os
+import sys
 from datetime import datetime
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from dataset_utils import dataset_path, prompt_dataset_name
 
 
 class QuizAppOffline:
-    def __init__(self, table_path='data/eibunpo/dataframe/eibunpo_sentences.csv'):
+    def __init__(self, table_path='data/datasets/default.csv'):
         self.table_path = table_path
         self.table_df = self.load_table()
         self.current_question_index = None
 
     def load_table(self):
         if not os.path.exists(self.table_path) or os.path.getsize(self.table_path) == 0:
-            print(f"{self.table_path} が見つかりません、または空です。終了します。")
+            print(f"データセットが見つかりません: {self.table_path}")
+            print("先に `uv run python scripts/add_question.py` で問題を追加してください。")
             exit()
         df = pd.read_csv(self.table_path)
         if 'ja' in df.columns and 'en' in df.columns:
@@ -23,6 +28,9 @@ class QuizAppOffline:
                     df[column] = 0
                 else:
                     df[column] = ''
+        # 文字列カラムが空のとき float 扱いになり、後で文字列を書くと警告が出るため object に統一
+        for column in ['last_answered', 'latest_label']:
+            df[column] = df[column].astype('object')
         return df
 
     def update_counts_time_and_label(self, index, is_correct):
@@ -118,5 +126,7 @@ class QuizAppOffline:
 
 
 if __name__ == "__main__":
-    app = QuizAppOffline()
+    name = prompt_dataset_name()
+    print(f"\nデータセット '{name}' で開始します。")
+    app = QuizAppOffline(table_path=dataset_path(name))
     app.start_quiz()

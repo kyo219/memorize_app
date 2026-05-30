@@ -19,6 +19,7 @@ class QuizApp:
             print("OpenAI APIキーが設定されていません。環境変数OPENAI_API_KEYを設定するか、初期化時に指定してください。")
             exit()
         openai.api_key = self.api_key
+        self.current_question_index = None  # 現在の問題インデックスを追加
 
     def load_table(self):
         if not os.path.exists(self.table_path) or os.path.getsize(self.table_path) == 0:
@@ -59,8 +60,58 @@ class QuizApp:
         return not answer in ['n', 'no']
 
     def ask_to_continue(self):
-        answer = input("続けますか？ Yes（そのままEnter）、No（Nと入力）: ").lower()
+        answer = input("続けますか？ Yes（そのままEnter）、No（Nと入力）、GPTに質問（gptと入力）: ").lower()
+        if answer == 'gpt':
+            self.ask_gpt_question()
+            return self.ask_to_continue()
         return answer in ['', 'y', 'yes']
+
+    def ask_gpt_question(self):
+        """GPTに質問するモード"""
+        print("\n----- GPT質問モード -----")
+        print("現在の問題に関連して質問したいことを入力してください（終了するには 'exit' と入力）:")
+        
+        # 現在の問題のコンテキスト情報を取得
+        current_index = self.current_question_index
+        if current_index is None or current_index >= len(self.table_df):
+            print("現在の問題情報が見つかりません。")
+            return
+            
+        row = self.table_df.iloc[current_index]
+        jp_text = row['jp'] if 'jp' in row else row['ja']
+        correct_eng = row['en'] if 'en' in row else row['eng']
+        
+        while True:
+            user_question = input("\n質問: ")
+            if user_question.lower() in ['exit', 'quit', '終了']:
+                break
+                
+            try:
+                response = openai.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": """
+                        あなたは英語学習の助手です。ユーザーの質問に対して、現在の問題の文脈を踏まえて丁寧に回答してください。
+                        特に英語の文法、熟語、表現の違いなどについて詳しく説明してください。
+                        """},
+                        {"role": "user", "content": f"""
+                        現在の問題:
+                        日本語: {jp_text}
+                        正解の英訳: {correct_eng}
+                        
+                        ユーザーの質問: {user_question}
+                        """}
+                    ]
+                )
+                
+                print("\n----- GPTの回答 -----")
+                print(response.choices[0].message.content)
+                print("\n" + "-" * 50)
+                
+            except Exception as e:
+                print(f"APIエラー: {e}")
+                
+        print("\n----- 通常モードに戻ります -----")
 
     def evaluate_with_gpt(self, user_answer, correct_answer, jp_text):
         """OpenAI APIを使用して回答を評価し、同時に熟語と文法も抽出する"""
@@ -121,6 +172,7 @@ class QuizApp:
         self.select_mode()
         total_questions = len(self.table_df)
         for index, row in self.table_df.iterrows():
+            self.current_question_index = index  # 現在の問題インデックスを保存
             remaining_questions = total_questions - (index + 1)
             
             print(f"\n===== 問題 {index + 1}/{total_questions} - 残り{remaining_questions}問 =====")

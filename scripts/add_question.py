@@ -28,6 +28,7 @@ def add_questions():
           f"{'（新規作成）' if is_new else f'（現在 {len(df)} 問）'}")
     print("日本語を空のまま Enter で終了します。\n")
 
+    MAX_REWRITES = 5
     added = 0
     while True:
         jp_text = input("日本語: ").strip()
@@ -37,6 +38,23 @@ def add_questions():
         if en_text == '':
             print("英語が空のためスキップしました。\n")
             continue
+
+        # 入力内容を確認。ダメなら最大5回まで書き直せる
+        rewrites = 0
+        while True:
+            print(f"\n  日本語: {jp_text}")
+            print(f"  英語  : {en_text}")
+            ans = input("これで登録しますか？ [Enter: OK / r: 書き直し]: ").strip().lower()
+            if ans in ['', 'y', 'yes', 'ok']:
+                break
+            if rewrites >= MAX_REWRITES:
+                print(f"書き直し上限（{MAX_REWRITES}回）に達しました。最後の入力で登録します。")
+                break
+            rewrites += 1
+            print(f"書き直してください（あと {MAX_REWRITES - rewrites + 1} 回）。"
+                  f"そのまま Enter で前の入力を残します。")
+            jp_text = input("日本語: ").strip() or jp_text
+            en_text = input("英語（答え）: ").strip() or en_text
 
         new_row = {
             'row': len(df) + 1,

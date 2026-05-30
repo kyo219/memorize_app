@@ -47,6 +47,19 @@ def ensure_columns(df):
     return df
 
 
+def write_out_practice(correct_answer, times=5):
+    """不正解時に、正解を指定回数だけ書き取りさせる（内容の一致は問わない）。"""
+    print(f"\n----- 書き取り練習（{times}回）-----")
+    print(f"正解: {correct_answer}")
+    count = 0
+    while count < times:
+        entry = input(f"書き取り ({count + 1}/{times}) > ").strip()
+        if entry == '':
+            continue
+        count += 1
+    print("----- 書き取り完了 -----")
+
+
 def load_dataset(path, create_if_missing=False):
     """データセットを読み込む。
 

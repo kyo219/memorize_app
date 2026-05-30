@@ -4,7 +4,7 @@ import sys
 from datetime import datetime
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from dataset_utils import dataset_path, prompt_dataset_name
+from dataset_utils import dataset_path, prompt_dataset_name, write_out_practice
 
 
 class QuizAppOffline:
@@ -67,6 +67,47 @@ class QuizAppOffline:
 
         print(f"\n対象問題数: {len(self.table_df)}問")
 
+    def run_question(self, index, row, position, total):
+        """1問を出題し、採点・記録まで行う。正解なら True を返す。
+
+        position は 1 始まりの表示順、total は対象問題数。
+        """
+        self.current_question_index = index
+        remaining_questions = total - position
+
+        print(f"\n{'='*50}")
+        print(f"問題 {position}/{total} (残り {remaining_questions}問)")
+        print('='*50)
+
+        jp_text = row['jp'] if 'jp' in row else row['ja']
+        correct_eng = row['en'] if 'en' in row else row['eng']
+        source_note = row.get('source_file', '')
+
+        print(f"\n【日本語】{jp_text}")
+        print("\n英訳を入力してください:")
+        user_answer = input("> ")
+
+        print("\n" + "-"*50)
+        print("【あなたの回答】")
+        print(f"  {user_answer}")
+        print("\n【正解】")
+        print(f"  {correct_eng}")
+
+        if pd.notnull(source_note) and source_note != '':
+            print(f"\n出典: {source_note}")
+        print("-"*50)
+
+        is_correct = self.ask_for_correctness()
+        self.update_counts_time_and_label(index, is_correct)
+
+        if is_correct:
+            print("✓ 正解として記録しました。")
+        else:
+            print("✗ 不正解として記録しました。")
+            write_out_practice(correct_eng)
+
+        return is_correct
+
     def start_quiz(self):
         self.select_mode()
 
@@ -79,40 +120,11 @@ class QuizAppOffline:
         answered_count = 0
 
         for index, row in self.table_df.iterrows():
-            self.current_question_index = index
-            remaining_questions = total_questions - (index + 1)
-
-            print(f"\n{'='*50}")
-            print(f"問題 {index + 1}/{total_questions} (残り {remaining_questions}問)")
-            print('='*50)
-
-            jp_text = row['jp'] if 'jp' in row else row['ja']
-            correct_eng = row['en'] if 'en' in row else row['eng']
-            source_note = row.get('source_file', '')
-
-            print(f"\n【日本語】{jp_text}")
-            print("\n英訳を入力してください:")
-            user_answer = input("> ")
-
-            print("\n" + "-"*50)
-            print("【あなたの回答】")
-            print(f"  {user_answer}")
-            print("\n【正解】")
-            print(f"  {correct_eng}")
-
-            if pd.notnull(source_note) and source_note != '':
-                print(f"\n出典: {source_note}")
-            print("-"*50)
-
-            is_correct = self.ask_for_correctness()
-            self.update_counts_time_and_label(index, is_correct)
+            is_correct = self.run_question(index, row, index + 1, total_questions)
 
             answered_count += 1
             if is_correct:
                 correct_count += 1
-                print("✓ 正解として記録しました。")
-            else:
-                print("✗ 不正解として記録しました。")
 
             print(f"\n現在の成績: {correct_count}/{answered_count} ({correct_count/answered_count*100:.1f}%)")
 

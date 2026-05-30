@@ -8,7 +8,7 @@ from pathlib import Path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from config import OPENAI_API_KEY
-from dataset_utils import dataset_path, prompt_dataset_name
+from dataset_utils import dataset_path, prompt_dataset_name, write_out_practice
 
 
 class QuizApp:
@@ -222,7 +222,10 @@ class QuizApp:
             # GPTの判定を使用して記録
             print(f"\n{'正解' if is_correct else '不正解'}として記録しました。")
             self.update_counts_time_and_label(index, is_correct)
-            
+
+            if not is_correct:
+                write_out_practice(correct_eng)
+
             print("\n" + "-" * 50)
             if not self.ask_to_continue():
                 break
